@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Clock, Eye, Users, BookOpen } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
