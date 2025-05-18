@@ -6,9 +6,23 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Users, Clock, BookOpen, Eye } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
 import EngagementChart from "@/components/EngagementChart";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+const courseFormSchema = z.object({
+  title: z.string().min(3, { message: "O título deve ter pelo menos 3 caracteres" }),
+  subject: z.string().min(2, { message: "A disciplina deve ter pelo menos 2 caracteres" }),
+});
+
+type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 const TeacherDashboard = () => {
-  const [courses] = useState<CourseData[]>([
+  const [courses, setCourses] = useState<CourseData[]>([
     {
       id: "course1",
       title: "Matemática Avançada",
@@ -50,6 +64,40 @@ const TeacherDashboard = () => {
     },
   ]);
   
+  const [openDialog, setOpenDialog] = useState(false);
+  
+  const form = useForm<CourseFormValues>({
+    resolver: zodResolver(courseFormSchema),
+    defaultValues: {
+      title: "",
+      subject: ""
+    }
+  });
+  
+  const onSubmit = (values: CourseFormValues) => {
+    const colors = ["#1967d2", "#34a853", "#ea4335", "#4285f4", "#fbbc05", "#5f6368"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const newCourse: CourseData = {
+      id: `course${courses.length + 1}`,
+      title: values.title,
+      subject: values.subject,
+      teacher: "Silva",
+      coverColor: randomColor,
+      metrics: {
+        views: 0,
+        timeSpent: 0,
+        materials: 0,
+        students: 0
+      }
+    };
+    
+    setCourses([...courses, newCourse]);
+    setOpenDialog(false);
+    toast.success("Curso criado com sucesso!");
+    form.reset();
+  };
+  
   const chartData = [
     { date: "01/05", views: 120, timeSpent: 45, participation: 92 },
     { date: "02/05", views: 132, timeSpent: 48, participation: 89 },
@@ -67,7 +115,7 @@ const TeacherDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Painel do Professor</h1>
-          <Button>
+          <Button onClick={() => setOpenDialog(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Criar Novo Curso
           </Button>
@@ -118,6 +166,47 @@ const TeacherDashboard = () => {
           ))}
         </div>
       </main>
+      
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Criar Novo Curso</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título do Curso</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Matemática Avançada" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Disciplina</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Matemática" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Criar Curso</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
